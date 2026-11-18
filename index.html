@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sound Quest - 2D Audio Game</title>
+<style>
+  :root { --ink:#17233b; --purple:#7357d9; --cyan:#49c6d8; --cream:#fff8e9; }
+  * { box-sizing:border-box; }
+  body {
+    margin:0; min-height:100vh; font-family:Arial, sans-serif; color:var(--ink);
+    background:linear-gradient(135deg,#dff7f4,#eee8ff 55%,#fff0d8);
+    display:flex; justify-content:center; align-items:center; padding:22px;
+  }
+  .game { width:min(100%,900px); background:#ffffffed; border:4px solid white; border-radius:26px;
+    box-shadow:0 18px 50px #26345b22; overflow:hidden; }
+  header { padding:22px 26px 12px; text-align:center; }
+  h1 { margin:0; font-size:clamp(28px,5vw,42px); color:#563bb5; }
+  .subtitle { margin:8px 0 0; color:#5e6880; }
+  .scene {
+    margin:12px 22px; min-height:175px; border-radius:20px; position:relative; overflow:hidden;
+    background:linear-gradient(#9be2f0 0 62%,#8ed18b 62% 100%);
+    display:flex; align-items:center; justify-content:center; text-align:center;
+  }
+  .scene:before { content:""; position:absolute; width:130px;height:130px;border-radius:50%;
+    background:#ffe58a; top:18px; right:11%; box-shadow:0 0 0 14px #ffe58a33; }
+  .cloud { position:absolute; top:35px; left:12%; font-size:42px; }
+  .trees { position:absolute; bottom:24px; left:7%; font-size:42px; }
+  .house { position:absolute; bottom:25px; right:9%; font-size:52px; }
+  .scene-message { position:relative; z-index:1; max-width:65%; padding:12px 18px;
+    border-radius:15px; background:#ffffffd9; font-weight:bold; line-height:1.4; }
+  .status { display:flex; justify-content:center; flex-wrap:wrap; gap:10px; padding:8px 20px 14px; }
+  .pill { background:#f0edff; border-radius:30px; padding:9px 15px; font-weight:bold; }
+  .target { margin:0 22px 14px; padding:15px; text-align:center; background:#fff6dc;
+    border:2px dashed #edbd52; border-radius:16px; }
+  .target strong { color:#805500; }
+  .buttons { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; padding:0 22px 18px; }
+  button { border:0; border-radius:16px; padding:14px 8px; min-height:88px; cursor:pointer;
+    color:#26304b; background:#f1f3ff; box-shadow:0 4px 0 #d8dcf2; font-size:15px; font-weight:bold;
+    transition:transform .12s, background .12s; }
+  button:hover { transform:translateY(-2px); background:#e6e2ff; }
+  button:active { transform:translateY(2px); box-shadow:0 1px 0 #d8dcf2; }
+  button .emoji { display:block; font-size:29px; margin-bottom:6px; }
+  .actions { display:flex; justify-content:center; gap:10px; flex-wrap:wrap; padding:0 20px 22px; }
+  .actions button { min-height:0; padding:12px 18px; background:#6b50cf; color:white; box-shadow:0 4px 0 #4933a3; }
+  .actions button.secondary { background:#263b60; box-shadow:0 4px 0 #172642; }
+  #feedback { min-height:28px; text-align:center; padding:0 15px 12px; font-weight:bold; }
+  .good { color:#16834a; } .bad { color:#b14a35; }
+  footer { text-align:center; color:#7a8295; font-size:12px; padding:0 15px 18px; }
+  @media(max-width:620px) { .buttons {grid-template-columns:repeat(2,1fr)} .scene-message{max-width:78%} }
+</style>
+</head>
+<body>
+<main class="game">
+  <header>
+    <h1>🔊 SOUND QUEST</h1>
+    <p class="subtitle">A 2D Audio Production Sound Challenge</p>
+  </header>
+
+  <section class="scene" aria-label="A colourful 2D outdoor scene">
+    <div class="cloud">☁️</div><div class="trees">🌳🌲</div><div class="house">🏡</div>
+    <div class="scene-message" id="sceneMessage">Welcome, Sound Explorer!<br>Listen carefully and find the correct sound.</div>
+  </section>
+
+  <div class="status">
+    <div class="pill">⭐ Score: <span id="score">0</span></div>
+    <div class="pill">🎯 Round: <span id="round">1</span>/8</div>
+    <div class="pill">❤️ Lives: <span id="lives">3</span></div>
+  </div>
+
+  <section class="target">
+    <strong>YOUR CHALLENGE</strong>
+    <div id="challenge" style="margin-top:6px">Press “Play Challenge” to hear the target sound.</div>
+  </section>
+
+  <section class="buttons" aria-label="Sound effect buttons">
+    <button onclick="choose('rain')"><span class="emoji">🌧️</span>Rain</button>
+    <button onclick="choose('birds')"><span class="emoji">🐦</span>Birds</button>
+    <button onclick="choose('footsteps')"><span class="emoji">👣</span>Footsteps</button>
+    <button onclick="choose('door')"><span class="emoji">🚪</span>Door</button>
+    <button onclick="choose('bell')"><span class="emoji">🔔</span>Bell</button>
+    <button onclick="choose('clap')"><span class="emoji">👏</span>Clap</button>
+    <button onclick="choose('wind')"><span class="emoji">💨</span>Wind</button>
+    <button onclick="choose('coin')"><span class="emoji">🪙</span>Coin</button>
+  </section>
+
+  <div class="actions">
+    <button onclick="playChallenge()">▶ Play Challenge</button>
+    <button class="secondary" onclick="replaySound()">🔁 Replay</button>
+    <button class="secondary" onclick="restart()">↻ Restart</button>
+  </div>
+  <div id="feedback" aria-live="polite"></div>
+  <footer>Tip: Click any sound button to hear its sound effect. Sound starts after your first click.</footer>
+</main>
+
+<script>
+let audioContext;
+let score = 0, lives = 3, round = 1, current = null, lastPlayed = null, locked = false;
+const sounds = ['rain','birds','footsteps','door','bell','clap','wind','coin'];
+const names = {
+ rain:'Rain', birds:'Birds chirping', footsteps:'Footsteps', door:'A door opening',
+ bell:'A ringing bell', clap:'Clapping hands', wind:'Wind blowing', coin:'A coin sound'
+};
+const descriptions = {
+ rain:'🌧️ Rain falls gently in the outdoor scene.',
+ birds:'🐦 Birds sing from the trees.',
+ footsteps:'👣 Someone walks along the path.',
+ door:'🚪 A door opens at the little house.',
+ bell:'🔔 A clear bell rings.',
+ clap:'👏 Someone claps their hands.',
+ wind:'💨 Wind blows through the trees.',
+ coin:'🪙 A coin makes a bright chime.'
+};
+function ctx() {
+  if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioContext.state === 'suspended') audioContext.resume();
+  return audioContext;
+}
+function tone(freq, start, duration, type='sine', volume=.18, endFreq=null) {
+  const c=ctx(), osc=c.createOscillator(), gain=c.createGain();
+  osc.type=type; osc.frequency.setValueAtTime(freq,c.currentTime+start);
+  if(endFreq) osc.frequency.exponentialRampToValueAtTime(endFreq,c.currentTime+start+duration);
+  gain.gain.setValueAtTime(.001,c.currentTime+start);
+  gain.gain.exponentialRampToValueAtTime(volume,c.currentTime+start+.015);
+  gain.gain.exponentialRampToValueAtTime(.001,c.currentTime+start+duration);
+  osc.connect(gain); gain.connect(c.destination);
+  osc.start(c.currentTime+start); osc.stop(c.currentTime+start+duration+.03);
+}
+function noise(start,duration,volume=.12,filterType='lowpass',frequency=900) {
+  const c=ctx(), buffer=c.createBuffer(1,Math.floor(c.sampleRate*duration),c.sampleRate);
+  const data=buffer.getChannelData(0);
+  for(let i=0;i<data.length;i++) data[i]=Math.random()*2-1;
+  const src=c.createBufferSource(), filter=c.createBiquadFilter(), gain=c.createGain();
+  src.buffer=buffer; filter.type=filterType; filter.frequency.value=frequency;
+  gain.gain.setValueAtTime(.001,c.currentTime+start);
+  gain.gain.linearRampToValueAtTime(volume,c.currentTime+start+.08);
+  gain.gain.setValueAtTime(volume,c.currentTime+start+duration*.65);
+  gain.gain.exponentialRampToValueAtTime(.001,c.currentTime+start+duration);
+  src.connect(filter); filter.connect(gain); gain.connect(c.destination);
+  src.start(c.currentTime+start); src.stop(c.currentTime+start+duration);
+}
+function playSound(kind) {
+  ctx();
+  switch(kind) {
+    case 'rain': noise(0,1.5,.10,'highpass',1700); break;
+    case 'birds':
+      [0,.25,.55,.9].forEach((t,i)=>tone(1500+i*180,t,.13,'sine',.09,2100+i*150));
+      break;
+    case 'footsteps':
+      [0,.32,.64,.96].forEach(t=>{ noise(t,.11,.2,'lowpass',260); tone(95,t,.09,'sine',.12,65); });
+      break;
+    case 'door':
+      noise(0,.32,.22,'lowpass',420); tone(170,.05,.35,'triangle',.13,75); tone(420,.35,.18,'sine',.08,220);
+      break;
+    case 'bell':
+      tone(880,0,.8,'sine',.2); tone(1320,.02,.65,'sine',.10); break;
+    case 'clap':
+      noise(0,.16,.28,'highpass',2400); noise(.08,.12,.13,'highpass',1800); break;
+    case 'wind':
+      noise(0,1.5,.16,'lowpass',500); break;
+    case 'coin':
+      tone(990,0,.18,'sine',.18,1450); tone(1480,.13,.45,'sine',.12,1800); break;
+  }
+  lastPlayed=kind;
+}
+function playChallenge() {
+  if(round>8 || lives<=0) return;
+  if(!current) current=sounds[round-1];
+  playSound(current);
+  document.getElementById('challenge').textContent='Listen to the sound, then choose the matching button!';
+  document.getElementById('sceneMessage').textContent='🎧 Listen carefully. Which sound is it?';
+  document.getElementById('feedback').textContent='Sound played. Make your choice below.';
+  document.getElementById('feedback').className='';
+}
+function replaySound() {
+  if(lastPlayed) playSound(lastPlayed);
+  else playChallenge();
+}
+function choose(kind) {
+  playSound(kind);
+  if(!current || round>8 || lives<=0) {
+    document.getElementById('feedback').textContent='Press “Play Challenge” to start the game.';
+    return;
+  }
+  if(locked) return;
+  if(kind===current) {
+    score+=10; locked=true;
+    document.getElementById('score').textContent=score;
+    document.getElementById('feedback').textContent='Correct! +10 points. '+names[current]+'.';
+    document.getElementById('feedback').className='good';
+    document.getElementById('sceneMessage').textContent=descriptions[current];
+    document.getElementById('challenge').textContent='Well done! You identified '+names[current]+'.';
+    setTimeout(()=>{
+      round++; locked=false;
+      document.getElementById('round').textContent=Math.min(round,8);
+      if(round>8) finish();
+      else { current=sounds[round-1]; document.getElementById('challenge').textContent='Press “Play Challenge” for the next sound.'; }
+    },1100);
+  } else {
+    lives--; document.getElementById('lives').textContent=lives;
+    document.getElementById('feedback').textContent='Not quite! Try another sound. Lives left: '+lives;
+    document.getElementById('feedback').className='bad';
+    if(lives<=0) {
+      document.getElementById('challenge').textContent='Game over! The correct sound was '+names[current]+'.';
+      document.getElementById('sceneMessage').textContent='🌟 Good try, Sound Explorer!';
+      document.getElementById('feedback').textContent='Game over! Your score: '+score+'. Press Restart to play again.';
+    }
+  }
+}
+function finish() {
+  document.getElementById('challenge').textContent='You identified all eight sound effects!';
+  document.getElementById('sceneMessage').textContent='🏆 Amazing! You are a Sound Explorer!';
+  document.getElementById('feedback').textContent='You completed the game with '+score+' points. Great job!';
+  document.getElementById('feedback').className='good';
+}
+function restart() {
+  score=0; lives=3; round=1; current='rain'; lastPlayed=null; locked=false;
+  document.getElementById('score').textContent='0';
+  document.getElementById('lives').textContent='3';
+  document.getElementById('round').textContent='1';
+  document.getElementById('challenge').textContent='Press “Play Challenge” to hear the target sound.';
+  document.getElementById('sceneMessage').innerHTML='Welcome, Sound Explorer!<br>Listen carefully and find the correct sound.';
+  document.getElementById('feedback').textContent='';
+  document.getElementById('feedback').className='';
+}
+</script>
+</body>
+</html>
